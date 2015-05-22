@@ -1,0 +1,70 @@
+package Chat_v2;
+
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+import java.util.Scanner;
+
+public class Client {
+
+	private ChatServer chatServer;
+	private ChatClient client;
+	private ClientGUI interfaz;
+	
+	public Client(){
+		interfaz = new ClientGUI(this);
+		interfaz.getListaMensajes().append("Escriba un nick y pulse Conectar\n");
+	}
+	
+  public static void main(String[] args) {
+	  Client cliente = new Client();
+	  
+	  
+  	/*System.out.println("Escriba un nick");
+    Scanner scanner = new Scanner(System.in);
+    String nombreCliente=scanner.nextLine();
+    System.out.println("¡Bienvenido/a " + nombreCliente+"!");
+    
+
+    try {
+      chatServer = (ChatServer) Naming.lookup(Server.SERVER_URL);
+      client = new ChatClientImpl();
+      chatServer.connect(client,nombreCliente);
+
+      client.setNick(nombreCliente);
+
+      String msg = "";
+
+      while (!msg.equals("exit")) {
+        msg = scanner.nextLine();
+        chatServer.send(msg,nombreCliente);
+      }
+
+      chatServer.disconnect(client,nombreCliente);
+    } catch (NotBoundException | RemoteException | MalformedURLException e) {
+      e.printStackTrace();
+    }*/
+  }
+  
+  public void enviar(){
+	  
+  }
+  public void conectar(){
+	  interfaz.getBtnConectar().setEnabled(false);
+	  interfaz.getBtnDesconectar().setEnabled(true);
+	  
+	  String nombre = interfaz.getMensaje().getText();
+	  interfaz.getListaMensajes().append("¡Bienvenido/a " + nombre+"!\n");
+	  try {
+	      chatServer = (ChatServer) Naming.lookup(Server.SERVER_URL);
+	      client = new ChatClientImpl();
+	      chatServer.connect(client,nombre);
+
+	      client.setNick(nombre);
+	  }
+	  catch (NotBoundException | RemoteException | MalformedURLException e) {
+	      e.printStackTrace();
+    }
+  }
+}

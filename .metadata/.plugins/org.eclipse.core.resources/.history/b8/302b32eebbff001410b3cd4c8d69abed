@@ -1,0 +1,14 @@
+package Chat_v2Privado;
+
+import javax.swing.JFrame;
+import javax.swing.JTextArea;
+
+public class PrivateGUI extends JFrame {
+	public PrivateGUI() {
+		getContentPane().setLayout(null);
+		
+		JTextArea textArea = new JTextArea();
+		textArea.setBounds(6, 6, 438, 390);
+		getContentPane().add(textArea);
+	}
+}

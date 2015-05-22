@@ -1,0 +1,47 @@
+package Chat_v2Privado;
+
+import javax.swing.JFrame;
+import javax.swing.JTextArea;
+import javax.swing.JPanel;
+import javax.swing.border.TitledBorder;
+import javax.swing.JTextField;
+import javax.swing.JButton;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+
+
+
+public class PrivateGUI extends JFrame {
+	private JTextField send;
+	private JTextArea mensajes;
+	private JPanel panel;
+	
+	public PrivateGUI() {
+		getContentPane().setLayout(null);
+		
+		panel = new JPanel();
+		panel.setBorder(new TitledBorder(null, "Mensajes", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panel.setBounds(6, 6, 438, 476);
+		getContentPane().add(panel);
+		panel.setLayout(null);
+		
+		mensajes = new JTextArea();
+		mensajes.setBounds(18, 26, 401, 352);
+		panel.add(mensajes);
+		
+		send = new JTextField();
+		send.setBounds(18, 390, 284, 64);
+		panel.add(send);
+		send.setColumns(10);
+		
+		JButton btnEnviar = new JButton("Enviar");
+		btnEnviar.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			}
+		});
+		btnEnviar.setBounds(314, 407, 117, 29);
+		panel.add(btnEnviar);
+		
+		this.setVisible(true);
+	}
+}

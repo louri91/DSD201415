@@ -1,0 +1,10 @@
+package Chat_v2Privado;
+
+import javax.swing.JFrame;
+
+public class PrivateGUI extends JFrame {
+	public PrivateGUI() {
+		getContentPane().setLayout(null);
+	}
+
+}
