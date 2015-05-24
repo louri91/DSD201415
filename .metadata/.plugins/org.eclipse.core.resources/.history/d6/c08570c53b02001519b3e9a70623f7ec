@@ -1,0 +1,28 @@
+package cliente;
+
+public class Conexion {
+	public String nick;
+	public String ConexionURL;
+	public int PuertoConexion;
+	
+	public String getNick() {
+		return nick;
+	}
+	public void setNick(String nick) {
+		this.nick = nick;
+	}
+	public String getConexionURL() {
+		return ConexionURL;
+	}
+	public void setConexionURL(String conexionURL) {
+		ConexionURL = conexionURL;
+	}
+	public int getPuertoConexion() {
+		return PuertoConexion;
+	}
+	public void setPuertoConexion(int puertoConexion) {
+		PuertoConexion = puertoConexion;
+	}
+	
+
+}

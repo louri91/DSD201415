@@ -1,0 +1,9 @@
+package cliente;
+
+public class Conexion {
+	public String nick;
+	public String ConexionURL;
+	public int PuertoConexion;
+	
+
+}
