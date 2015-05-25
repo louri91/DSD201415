@@ -1,0 +1,37 @@
+package Chat_v2;
+
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+import java.util.Scanner;
+
+public class Client {
+
+  public static void main(String[] args) {
+  	System.out.println("Escriba un nick");
+    Scanner scanner = new Scanner(System.in);
+    String nombreCliente=scanner.nextLine();
+    System.out.println("¡Bienvenido/a " + nombreCliente+"!");
+
+    try {
+      ChatServer chatServer = (ChatServer) Naming.lookup(Server.SERVER_URL);
+      ChatClient client = new ChatClientImpl();
+      chatServer.connect(client,nombreCliente);
+
+      client.setNick(nombreCliente);
+
+      String msg = "";
+
+      while (!msg.equals("exit")) {
+        msg = scanner.nextLine();
+        chatServer.send(msg,nombreCliente);
+      }
+
+      chatServer.disconnect(client,nombreCliente);
+    } catch (NotBoundException | RemoteException | MalformedURLException e) {
+      e.printStackTrace();
+    }
+  }
+ 
+}

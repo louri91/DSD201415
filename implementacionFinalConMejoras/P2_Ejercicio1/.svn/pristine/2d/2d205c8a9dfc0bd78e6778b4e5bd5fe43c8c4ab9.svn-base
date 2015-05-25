@@ -1,0 +1,118 @@
+package Escoba;
+
+public class Baraja extends Vector{
+    
+    static final int N = 3;
+    private int numCartaActiva = -1;
+    private boolean activada = false;
+    
+    public Baraja(){        
+        super(N);
+    }
+    
+    public void inicializar(){
+        super.inicializar();
+        numCartaActiva = -1;       
+        activada = false;
+    }
+        
+    public void setBarajaCpu(){
+        for(int i = 0; i<N; i++){
+            cartas[i].setCpu(true);
+        }
+    }
+    public void Desactivar(){
+        activada = false;
+        numCartaActiva = -1;
+    }
+    public Carta elegirRandomCarta(){
+        int n;
+        if(!activada){
+            while(true){
+                n = (int)((double)Math.random()*3);        
+                if(cartas[n].num>0){    
+                    cartas[n].activar();
+                    activada = true;
+                    numCartaActiva = n;
+                    return cartas[n];
+                }
+            }
+        }else{
+            cartas[numCartaActiva].activar();
+            activada = false;
+            numCartaActiva = -1;
+            return null;
+        }
+    }
+    public void quitarSeleccionada(){
+        cartas[numCartaActiva].borrar();
+        activada = false;
+        numCartaActiva = -1;
+    }
+    
+    public Carta activar(int x, int y){
+        if(!activada){
+         for(int i = 0; i<N; i++){
+            if(cartas[i].visible && cartas[i].contiene(x, y) && cartas[i].imagen!=null){
+                cartas[i].activar(); 
+                activada = true;
+                numCartaActiva = i;
+                return cartas[i];
+            }
+         } 
+         return null;
+        }else{
+            if(cartas[numCartaActiva].contiene(x,y)){
+                activada = false;
+                cartas[numCartaActiva].activar();
+                numCartaActiva = -1;
+            }      
+            return null;
+        }        
+    }
+    public void activar(int pos){
+        cartas[pos].activar(); 
+        if(!activada){            
+            activada = true;
+            numCartaActiva = pos;
+        }else{            
+            activada = false;
+            numCartaActiva = -1;           
+        }
+    }
+    
+    public Carta getCartaActivada(){
+       if(numCartaActiva>=0)
+           return cartas[numCartaActiva];
+       else
+           return null;
+    }    
+    
+    //devuelve la posicion de la 1er carta menor a 5
+    public int hayMenoresA5(){
+        for(int i = 0; i<N; i++){
+            if(cartas[i].num>0 && cartas[i].num<5)
+                return i;
+        }
+        return -1;
+    }
+    public Carta get7Oro(){
+        for(int i = 0; i<N;i++){
+            if(cartas[i].num==7 && cartas[i].palo == "oro")
+                return cartas[i];
+        }
+        return null;
+    }
+    public void setCoordenadas(boolean esCpu){
+        if(esCpu){
+            cartas[0].setXY(70,  30);
+            cartas[1].setXY(140,  30);
+            cartas[2].setXY(210, 30);
+        }
+        else{
+            cartas[0].setXY(70,  325);
+            cartas[1].setXY(140,  325);
+            cartas[2].setXY(210, 325);
+        }        
+    }
+}

@@ -1,0 +1,18 @@
+package ChatPublico;
+
+import java.rmi.*;
+
+public class ChatPublico {
+	public static void main(String[] args) {
+		try {
+				//System.setSecurityManager(new RMISecurityManager());
+			 	java.rmi.registry.LocateRegistry.createRegistry(5000);
+			 	
+				ServerInterface server = new Server();	
+				Naming.rebind("rmi://192.168.1.37", server);
+				System.out.println("[System] El chat está listo");
+			}catch (Exception e) {
+					System.out.println("Fallo en el servidor " + e);
+			}
+	}
+}

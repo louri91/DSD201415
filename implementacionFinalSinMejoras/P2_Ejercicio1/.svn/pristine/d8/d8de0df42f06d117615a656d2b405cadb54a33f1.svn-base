@@ -1,0 +1,5 @@
+Ejecutar el servidor
+java servidor
+
+Ejecutar el cliente (es necesario disponer de un minimos de dos clientes)
+java cliente

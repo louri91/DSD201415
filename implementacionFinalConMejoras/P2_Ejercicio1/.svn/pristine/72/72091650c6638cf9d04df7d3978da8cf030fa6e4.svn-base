@@ -1,0 +1,20 @@
+package Chat_v2;
+
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+
+public class ChatClientImpl extends UnicastRemoteObject implements ChatClient {
+	String nombreCliente;
+	protected ChatClientImpl() throws RemoteException {
+		super(0);
+	}
+	@Override
+	public void callback(String content, String nombreUsuario) {
+		System.out.println(nombreUsuario+": " + content);
+	}
+
+	@Override
+	public void setNick(String nombreUsuario) throws RemoteException {
+		this.nombreCliente = nombreUsuario;
+	}
+}

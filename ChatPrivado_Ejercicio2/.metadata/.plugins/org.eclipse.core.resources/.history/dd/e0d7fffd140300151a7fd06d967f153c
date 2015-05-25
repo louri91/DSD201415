@@ -1,0 +1,70 @@
+package cliente;
+
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+
+
+public class ChatClientImpl extends UnicastRemoteObject implements ChatClient {
+	/**
+	 * Parámetros globales de ChatClientImpl que implementa la interfaz remota de ChatClient
+	 * - nombreCliente para asignarle un nombre
+	 * - interfaz para asignar una interfaz primaria
+	 * - cliente para especificar qué ejecución está relacionada con cada una de las instancias de cliente.
+	 * 
+	 */
+	private String nombreCliente;
+	private ClientGUI interfaz;
+	private Client cliente;
+	
+	/**
+	 * Método constructor de la clase
+	 * @param interfaz
+	 * @param cliente
+	 * @throws RemoteException
+	 */
+	protected ChatClientImpl(ClientGUI interfaz,Client cliente) throws RemoteException {
+		super(0);
+		this.interfaz = interfaz;
+		this.cliente = cliente;
+	}
+	/**
+	 * Método de propagación de mensajes a través del servidor. Únicamente se utiliza para que cada uno de los clientes
+	 * actualice la lista de usuarios conectados.
+	 */
+	@Override
+	public void callback() throws RemoteException {
+		cliente.actualizarListaUsuarios();
+	}
+
+	@Override
+	public void setNick(String nombreUsuario) throws RemoteException {
+		this.nombreCliente = nombreUsuario;
+	}
+	public String getNick(){
+		return nombreCliente;
+	}
+	
+	public void conectarClientes(String nombreUsuario, String nick, String URL) {
+		System.out.println(URL);
+		try {
+			ChatClient ch = (ChatClient) Naming.lookup(URL);
+			
+			cliente.conectaMR(ch, nombreUsuario, nick);
+		} catch (MalformedURLException | NotBoundException | RemoteException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+	@Override
+	public void callback(String content, String nombreUsuario)
+		throws RemoteException {
+		//cliente.conectaMR(ch, nombreUsuario, this.nombreCliente, content);
+		System.out.println(nombreUsuario+": " + content);
+		cliente.actualizarInterfazMensajes(content, nombreUsuario);
+		
+	}
+}

@@ -1,0 +1,12 @@
+package Craps;
+
+/**
+ * Some convenient constants
+ */
+public interface GameStatus
+{
+    public static final int CONTINUE = 1, WON = 2, LOST = 3;
+    public int darSaldo();
+    public void ponerSaldo(int d);
+}
+

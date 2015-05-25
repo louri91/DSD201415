@@ -1,0 +1,160 @@
+package Craps;
+
+import java.awt.*;
+import javax.swing.*;
+
+/**
+ * GamePanel manages a game of craps.
+ * 
+ * @author William Austad
+ * @version 2/10/06 ff.
+ */
+public class GamePanel extends JPanel implements GameStatus {
+	// constants known through all of the class
+	private final int PANEL_HEIGHT = 240;
+	private final int PANEL_WIDTH = 300;
+	private final Color BACK_COLOR = Color.ORANGE;
+	private Craps craps;
+	private int dinero,apuesta;
+
+	/**
+	 * Constructor for GamePanel initializes the text field several labels and
+	 * such.
+	 */
+	public GamePanel() {
+		//dinero = 1000;
+		craps = new Craps();
+		// set the color
+		setBackground(BACK_COLOR);
+		// set the size
+		setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT));
+	} // of constructor
+
+	public void init() {
+		craps.init();
+		repaint();
+	}
+
+	public int darSaldo() {
+		return dinero;
+	}
+
+	public void ponerSaldo(int d) {
+		dinero = d;
+		repaint();
+	}
+
+	public String statusString(int st) {
+		switch (st) {
+		case WON:
+			dinero+=apuesta;
+			return ("GANASTE!");
+		case CONTINUE:
+			return ("CONTINUAR");
+		case LOST:
+			dinero-=apuesta;
+			return ("PERDISTE");
+		default:
+			return ("Error de condición!!!");
+		}
+	}
+
+	/**
+	 * Here, the drawing of the applet gets done. "paint" gets called everytime
+	 * the dice should be drawn on the screen.
+	 * 
+	 * @param g
+	 *            the Graphics object for this applet
+	 */
+	public void paintComponent(Graphics g) {
+		// simple text displayed on applet
+		g.setColor(BACK_COLOR);
+		g.fillRect(0, 0, PANEL_WIDTH, PANEL_HEIGHT);
+		// g.setColor(Color.black);
+		paintDie(g, 20, craps.getRoll1());
+		paintDie(g, 150, craps.getRoll2());
+		g.setColor(Color.black);
+		if (!craps.getIsFirst()) {
+			g.drawString(statusString(craps.getStatus()), 50, 200);
+			if (craps.getStatus() == CONTINUE) {
+				g
+						.drawString(("Mi puntuación: " + craps.getMyPoint()),
+								200, 200);
+			}
+		}
+		Font defecto = g.getFont();
+		Font fnumero= new Font("Default",0,22);
+		g.setColor(Color.red);
+		g.fillRect(0, 240, 100, 50);
+		g.setColor(Color.cyan);
+		g.fillRect(100, 240, 100, 50);
+		g.setColor(Color.BLACK);
+		g.drawString("SALDO", 0, 250);
+		g.drawString("APUESTA", 100, 250);
+		g.setFont(fnumero);
+		g.drawString("" + dinero, 0, 275);
+		g.drawString("" + apuesta, 100, 275);
+		g.setFont(defecto);
+	}
+
+	/**
+	 * displays a Die on the screen
+	 * 
+	 * @param g
+	 *            the Graphics object for this applet
+	 * @param xOffset
+	 *            The X-coordinate of the upper left hand corner of the Die
+	 */
+	private void paintDie(Graphics g, int xOffset, int roll) {
+		if ((roll > 6) || (roll < 1))
+			return;
+		g.setColor(Color.white);
+		g.fillRect(xOffset, 60, 120, 120);
+		g.setColor(Color.black);
+		g.drawRect(xOffset, 60, 120, 120);
+		switch (roll) {
+		case 1:
+			g.fillOval(xOffset + 50, 110, 20, 20);
+			break;
+		case 2:
+			g.fillOval(xOffset + 30, 110, 20, 20);
+			g.fillOval(xOffset + 70, 110, 20, 20);
+			break;
+		case 3:
+			g.fillOval(xOffset + 20, 110, 20, 20);
+			g.fillOval(xOffset + 50, 110, 20, 20);
+			g.fillOval(xOffset + 80, 110, 20, 20);
+			break;
+		case 4:
+			g.fillOval(xOffset + 30, 85, 20, 20);
+			g.fillOval(xOffset + 70, 85, 20, 20);
+			g.fillOval(xOffset + 30, 135, 20, 20);
+			g.fillOval(xOffset + 70, 135, 20, 20);
+			break;
+		case 5:
+			g.fillOval(xOffset + 50, 110, 20, 20);
+			g.fillOval(xOffset + 30, 85, 20, 20);
+			g.fillOval(xOffset + 70, 85, 20, 20);
+			g.fillOval(xOffset + 30, 135, 20, 20);
+			g.fillOval(xOffset + 70, 135, 20, 20);
+			break;
+		case 6:
+			g.fillOval(xOffset + 20, 85, 20, 20);
+			g.fillOval(xOffset + 50, 85, 20, 20);
+			g.fillOval(xOffset + 80, 85, 20, 20);
+			g.fillOval(xOffset + 20, 135, 20, 20);
+			g.fillOval(xOffset + 50, 135, 20, 20);
+			g.fillOval(xOffset + 80, 135, 20, 20);
+			break;
+		}
+	}
+	public void setApuesta(String valor){
+		apuesta = Integer.parseInt(valor);
+		if(dinero < apuesta){
+			apuesta = dinero;
+		}
+	}
+	public Craps getCraps() {
+		return (craps);
+	}
+} // of class GamePanel

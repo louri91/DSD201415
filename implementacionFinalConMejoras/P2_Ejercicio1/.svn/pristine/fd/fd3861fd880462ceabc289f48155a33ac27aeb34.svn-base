@@ -1,0 +1,375 @@
+package Escoba;
+
+
+import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.awt.Button;
+import java.awt.Label;
+import java.awt.MediaTracker;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Color;
+import java.awt.Frame;
+import java.awt.TextField;
+import java.awt.Toolkit;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseAdapter;
+import java.rmi.registry.Registry;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+
+import Casino.IJuego;
+import Casino.ICasino;
+
+public class Escoba extends Frame implements ActionListener,Runnable,IJuego
+
+{
+    static ICasino casino;
+	private static final long serialVersionUID = 1L;
+	private static final int ancho= 570, alto= 430; //Ancho y alto del applet
+    private Ayuda frameAyuda = null;            //Ventana ayuda
+    Image  cartas[], fondo;                            //Vector que guarda las imagenes cargadas
+    BufferedImage buffer = null;                 //Buffer donde dibujamos
+    Graphics2D gb;                                //Objeto grafico para dibujar
+    private Juego juego;                        //Clase Juego
+    private Button  bNuevo, bAyuda;             //Botones
+    private Label titulo, lblganador1, lblganador2, lblsaldo, lblapuesta, lbleuros, lblsal, lbleuro; //Etiquetas
+    private String mensaje= "";
+    private Font font, font2, font3;            //Tres tipos de fuentes distintas
+    private Thread cargador = null;             //Thread que realiza la carga del applet y las imagenes
+    private int barra, saldo = 0;                          //Variable para dibujar el porcentaje de la carga
+    private Firework fa1 ,fa2;                  //Fuegos artificiales al terminar la partida.
+    private TextField tfapuesta;
+    
+    public static final void main(String args[]){
+		 
+		    Escoba juego = new Escoba();
+		  //SERVIDOR
+			
+	 		try {
+				Registry registry = LocateRegistry.getRegistry(2500);     
+			    IJuego stub = (IJuego) UnicastRemoteObject.exportObject(juego, 0);
+			    registry.rebind("Escoba", stub);
+			    casino = (ICasino) registry.lookup("Casino");
+			    
+			    System.err.println("Escoba listo");
+			} catch (Exception e) {
+			    System.err.println("Server exception: " + e.toString());
+			    e.printStackTrace();
+			}
+	 		
+	 		// SERVIDOR
+	}
+    
+	public Escoba()
+	{
+
+		setLayout(null);
+		setVisible(false);
+		setSize(ancho, alto);				
+		buffer = this.getGraphicsConfiguration().createCompatibleImage(ancho,alto);
+		gb = buffer.createGraphics();
+		cargador = new Thread(this);
+		cargador.start();	
+		this.addWindowListener(new WindowAdapter(){
+			public void windowClosing(WindowEvent e){
+				setVisible(false);
+				//stop();
+				//dispose();
+				try {
+					 
+				    casino.acabado();
+				} catch (Exception ex) {
+				    System.err.println("Client exception: " + e.toString());
+				    ex.printStackTrace();
+				}
+				//System.exit(0);
+			}
+		});
+		this.addMouseListener(new MouseAdapter(){
+			public void mousePressed(MouseEvent e){
+				juego.seleccionarCarta(e.getX(), e.getY());
+			}
+		});
+	}
+	
+	public void stop(){
+	    if(cargador!=null) cargador.stop();
+	    cargador = null;
+	    if(juego!=null) juego.finalizar();
+	    juego = null;
+	}
+		
+	public void actionPerformed(ActionEvent ev){
+	    Object o = ev.getSource();
+        if(o==bNuevo){
+        	try{
+            	int apuesta = Integer.parseInt(tfapuesta.getText());
+            	if(apuesta > Integer.parseInt(lblsaldo.getText())) return;
+            	if(Integer.signum(apuesta) == -1 || apuesta == 0) return;
+            	lblsaldo.setText(String.valueOf(Integer.parseInt(lblsaldo.getText()) - apuesta));
+            }catch(Exception exc){
+            	return;
+            }
+        	remove(fa1); remove(fa2);
+            remove(lblganador1);remove(lblganador2);
+            juego.comenzar(false);	   
+            bNuevo.setVisible(false);
+            tfapuesta.setEditable(false);
+	    }
+	    else if(o == bAyuda){	        	            
+	        frameAyuda.setVisible(true);
+	    }
+	}
+	public void mostrarMensaje(String s){
+	    mensaje = s;
+	}
+	
+    private void pintarCarga(String txt){
+        gb.setColor(Color.black);
+        gb.fillRect(0,0,ancho,alto);
+        gb.setColor(Color.red);
+        gb.setFont(font3);
+        gb.drawString(txt,(ancho>>1)-90,(alto>>1)-15);
+        gb.fillRect((ancho>>1)-91, 230, barra<<1, 30);	        
+	    gb.setColor(Color.gray.darker());
+   	    gb.drawRect((ancho>>1)-92, 230, 165, 32);
+        repaint();
+    }
+         
+	public void pintarAnim(){
+	  synchronized(gb){
+	    gb.setColor(Color.black);
+	    gb.fillRect(0,0,381,425);
+	    gb.setColor(Color.orange);
+        gb.drawRect(10,25, 370, 400);
+        
+	    juego.pintarAnim();
+	    	    
+	    gb.setColor(Color.black);
+	    gb.fillRect(393,92, 165, 40);	    
+	    
+	    gb.setFont(font3);
+        gb.setColor(Color.yellow);
+	    gb.drawString(mensaje,400,128);
+	  }
+	  repaint();	    
+	}
+	
+	public void pintarTodo(){
+        synchronized(gb){
+	    //fondo negro
+	    gb.setColor(Color.black);
+	    gb.fillRect(0,0,ancho,alto);   
+	    //cuadro naranja
+	    gb.setColor(Color.orange);
+	    gb.drawRect(10,25, 370, 400);	   
+	    gb.drawRect(468,288,80,2);
+	    //cuadro mensaje
+	    gb.setColor(Color.red);
+	    gb.drawRect(390,70, 170, 70);	    	    	    
+	    
+	    //Cuadro de puntos
+	    gb.setColor(Color.blue);
+	    gb.drawRect(390,155, 170, 165);
+	    gb.setColor(Color.green);
+	    gb.setFont(font);
+	    gb.drawString("JUGADOR      PC",430,180);
+	    gb.setFont(font2);
+	    gb.drawString("CARTAS",395,200);	    
+	    gb.drawString("VELOS",395,220);
+	    gb.drawString("OROS",395,240);
+	    gb.drawString("SETENTA",395,260);
+	    gb.drawString("ESCOBAS",395,280);
+	    gb.setFont(font);
+	    gb.drawString("TOTAL",395,310);
+	    //Pintamos los puntajes
+	    gb.setFont(font3);	    
+	    gb.setColor(Color.green);
+	    gb.drawString(Integer.toString(juego.puntosJug.mascartas),480,200);
+	    gb.drawString(Integer.toString(juego.puntosCpu.mascartas),530,200);
+	    gb.drawString(Integer.toString(juego.puntosJug.velos),480,220);
+	    gb.drawString(Integer.toString(juego.puntosCpu.velos),530,220);
+	    gb.drawString(Integer.toString(juego.puntosJug.masoros),480,240);
+	    gb.drawString(Integer.toString(juego.puntosCpu.masoros),530,240);
+	    gb.drawString(Integer.toString(juego.puntosJug.setenta),480,260);
+	    gb.drawString(Integer.toString(juego.puntosCpu.setenta),530,260);
+	    gb.drawString(Integer.toString(juego.puntosJug.escobas),480,280);
+	    gb.drawString(Integer.toString(juego.puntosCpu.escobas),530,280);
+	    gb.drawString(Integer.toString(juego.puntosJug.total),480,310);
+	    gb.drawString(Integer.toString(juego.puntosCpu.total),530,310);	    
+	    
+	    repaint();
+	    if(juego.finJuego == true){//Mostramos ganador y fuegos artificiales	        	        
+	        bNuevo.setVisible(true);	        
+	        add(fa1); add(fa2);
+	        add(lblganador1);
+	        String ganador = juego.getGanador();
+	        int saldo = Integer.parseInt(lblsaldo.getText());
+	        lblganador2.setText(ganador);
+	        if(ganador.equals("TU GANAS")) saldo += 2 * Integer.parseInt(tfapuesta.getText());
+	        else if(ganador.equals("EMPATE")) saldo += Integer.parseInt(tfapuesta.getText());
+	        lblsaldo.setText(String.valueOf(saldo));
+	        lblsaldo.setVisible(true);
+	        add(lblganador2);
+	        tfapuesta.setEditable(true);
+	        repaint();
+	    }else{
+	        gb.setColor(Color.yellow);
+	        gb.setFont(font);    
+	        gb.drawString(mensaje,410,128);
+	        gb.drawString(juego.getTurno(),445,90);
+	        juego.pintarCartas();
+	        repaint();
+        }
+        }//fin synchronized
+	    
+	}
+	public synchronized void update(Graphics g){
+	    paint(g);
+	}
+	
+	public synchronized void paint(Graphics g){
+	    if(buffer!=null) g.drawImage(buffer, 0,0,this);
+	}
+	
+	public void run(){
+	    String p;
+        int i, j, cont = 0;
+        setTitle("Cargando...");
+        MediaTracker mt = new MediaTracker(this);        
+        mt.addImage(buffer,0);   try{ mt.waitForID(0);  } catch(Exception e){}		
+        
+        pintarCarga("Inicializando el applet...");	    
+        frameAyuda = new Ayuda();
+        font = new Font("Arial",Font.BOLD,14);
+        font2 = new Font("Serif",Font.BOLD,12);
+        font3 = new Font("San Serif",Font.BOLD,16);
+		bNuevo = new Button("Apostar");
+		bNuevo.setBounds(405, 360, 70, 27);
+		bNuevo.setFont(font);		
+		bAyuda = new Button("Ayuda");
+		bAyuda.setBounds(485, 360, 70, 27);
+		bAyuda.setFont(font);		
+		
+		titulo = new Label("LA ESCOBA");
+		titulo.setFont(font3);
+		titulo.setAlignment(Label.CENTER);
+		titulo.setBackground(new Color(136,136,210));
+		titulo.setForeground(Color.orange);
+		titulo.setBounds(400, 25, 155, 40);
+		add(titulo);
+		lblsal = new Label(String.valueOf("Saldo: "));
+		lblsal.setFont(font);
+		lblsal.setAlignment(Label.CENTER);
+		lblsal.setBackground(Color.black);
+		lblsal.setForeground(Color.orange);
+		lblsal.setBounds(395, 100, 50, 40);
+		add(lblsal);
+		lblsaldo = new Label(String.valueOf(saldo));
+		lblsaldo.setFont(font);
+		lblsaldo.setAlignment(Label.CENTER);
+		lblsaldo.setBackground(Color.black);
+		lblsaldo.setForeground(Color.orange);
+		lblsaldo.setBounds(440, 100, 50, 40);
+		add(lblsaldo);
+		lbleuro = new Label(String.valueOf("€"));
+		lbleuro.setFont(font);
+		lbleuro.setAlignment(Label.CENTER);
+		lbleuro.setBackground(Color.black);
+		lbleuro.setForeground(Color.orange);
+		lbleuro.setBounds(475, 100, 50, 40);
+		add(lbleuro);
+		lblapuesta = new Label("Apuesta: ");
+		lblapuesta.setFont(font);
+		lblapuesta.setAlignment(Label.CENTER);
+		lblapuesta.setBackground(Color.black);
+		lblapuesta.setForeground(Color.orange);
+		lblapuesta.setBounds(385, 325, 80, 30);
+		add(lblapuesta);
+		tfapuesta = new TextField("1");
+		tfapuesta.setFont(font);
+		tfapuesta.setBackground(Color.white);
+		tfapuesta.setForeground(Color.orange);
+		tfapuesta.setBounds(465, 328, 50, 22);
+		add(tfapuesta);
+		lbleuros = new Label("€");
+		lbleuros.setFont(font);
+		lbleuros.setAlignment(Label.CENTER);
+		lbleuros.setBackground(Color.black);
+		lbleuros.setForeground(Color.orange);
+		lbleuros.setBounds(500, 328, 50, 22);
+		add(lbleuros);
+		lblganador1 = new Label("FIN DEL JUEGO!");
+		lblganador1.setBounds(140,170,120,15);		
+		lblganador1.setBackground(Color.black);
+		lblganador1.setForeground(Color.white);
+		lblganador1.setFont(font);
+		lblganador2 = new Label("");
+		lblganador2.setBounds(160,230,80,15);
+		lblganador2.setBackground(Color.black);
+		lblganador2.setForeground(Color.white);
+		lblganador2.setFont(font);
+		juego = new Juego(this);
+		fa1 = new Firework();
+		fa1.setBounds(12,7,360,150);
+		fa2 = new Firework();
+		fa2.setBounds(12,250,360,150);
+		bNuevo.addActionListener(this);		
+		bAyuda.addActionListener(this);		
+		
+		setTitle("Cargando imagenes..");			        
+		
+        cartas = new Image[40];
+        fondo = Toolkit.getDefaultToolkit().getImage("/Documents and Settings/Administrador/Escritorio/juegos/Casino/src/Escoba/Mazo-Escoba/fondo.gif");
+        mt.addImage(fondo,0);
+        try{ mt.waitForID(0);  } catch(Exception e){}
+        barra+=2;
+        pintarCarga("Cargando Imagenes...");
+        for (j = 0; j<4; j++) {              
+            for(i = 1; i<=10; i++)
+            {  if (j == 0)
+                   p = "copa";
+               else if (j==1)
+                   p = "basto";
+               else if (j==2)
+                   p = "oro";
+               else 
+                   p= "espada";
+               if(i == 8)
+                   cartas[cont] = Toolkit.getDefaultToolkit().getImage("/Documents and Settings/Administrador/Escritorio/juegos/Casino/src/Escoba/Mazo-Escoba/10"+p+".gif");  
+               else if(i == 9)
+                   cartas[cont] = Toolkit.getDefaultToolkit().getImage("/Documents and Settings/Administrador/Escritorio/juegos/Casino/src/Escoba/Mazo-Escoba/11"+p+".gif");  
+               else if(i == 10)
+                   cartas[cont] = Toolkit.getDefaultToolkit().getImage("/Documents and Settings/Administrador/Escritorio/juegos/Casino/src/Escoba/Mazo-Escoba/12"+p+".gif");  
+               else
+                    cartas[cont] = Toolkit.getDefaultToolkit().getImage("/Documents and Settings/Administrador/Escritorio/juegos/Casino/src/Escoba/Mazo-Escoba/"+Integer.toString(i)+p+".gif");  
+               mt.addImage(cartas[cont],0);            
+               cont++;
+               try{ mt.waitForID(0);  } catch(Exception e){}
+               barra+=2;               
+               pintarCarga("Click para empezar...");
+            }
+        }        
+        setTitle("La Escoba");		
+        add(bNuevo); 
+        bNuevo.setVisible(true);
+        add(bAyuda);
+		juego.mazo.setImagenes(cartas);
+	    juego.comenzar(true);
+	}
+	public int darSaldo() {
+		return Integer.parseInt(lblsaldo.getText());
+	}
+	public void ponerSaldo(int s) {
+		saldo=s;
+		lblsaldo.setText(String.valueOf(saldo));
+		setVisible(true);
+	}
+}

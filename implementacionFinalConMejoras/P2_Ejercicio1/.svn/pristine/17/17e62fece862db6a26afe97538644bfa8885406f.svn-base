@@ -1,0 +1,230 @@
+package Escoba;
+
+public class Baza extends Vector{
+    private int[] cartasAllevar = null;
+    private int indexCartasAllevar = 0;
+    
+    public Baza(){
+        super(12);
+        cartasAllevar = new int[12];
+    }
+    public int getXcarta(){
+        return cartas[numCartas].x;
+    }
+    public int getYcarta(){
+        return cartas[numCartas].y;
+    }
+    //Activa la carta de la baza, en cuya posicion clikeo el usuario
+    public void activar(int x, int y){
+        for(int i = 0; i<numCartas;i++){
+            if(!estaParaLlevar(i) && cartas[i].visible&& cartas[i].contiene(x, y) && cartas[i].imagen!=null){
+                cartas[i].activar();                            
+                cartasAllevar[indexCartasAllevar] = i;
+                indexCartasAllevar++;
+                break;
+            }
+            else if(cartas[i].contiene(x,y)&& estaParaLlevar(i)){                
+                cartas[i].activar();
+                eliminarCartaAllevar(i);
+            }
+          }
+    }
+    private void eliminarCartaAllevar(int carta){
+        int j = 0;
+        while(cartasAllevar[j]!=carta && j<indexCartasAllevar) j++;
+        
+        while(j+1<indexCartasAllevar){ 
+            cartasAllevar[j] = cartasAllevar[j+1];
+            j++;
+        }
+        cartasAllevar[j] = 0;
+        if(indexCartasAllevar>0) indexCartasAllevar--;
+    }
+    
+    private boolean estaParaLlevar(int carta){
+        for(int i = 0; i< indexCartasAllevar; i++){
+            if(cartasAllevar[i] == carta) return true;
+        }
+        return false;
+    }
+    //Activa las cartas de la baza cuyas posiciones vienen en poscartas[]
+    public void activar(int poscartas[]){
+        indexCartasAllevar = 0;
+        for(int i = 0; i<poscartas.length;i++){
+            cartas[poscartas[i]].activar();
+            cartasAllevar[indexCartasAllevar] = poscartas[i];
+            indexCartasAllevar++;
+        }
+    }
+    
+    //Devuelve el numero de cartas Seleccionadas
+    public int getNumActivadas(){
+        return indexCartasAllevar;
+    }
+    
+    public void acomodarCartas(){
+       int n = 0;
+      
+       while(n<numCartas){
+            if(cartas[n].num==0)   break;
+            else n++;
+        }
+        for(int j = n+1;j<numCartas;j++){
+               if(cartas[j].num>0){
+                  cartas[n].copiar(cartas[j]);;
+                  cartas[j].borrar();
+                  n++;
+             }
+        }
+          
+        setCoordenadas();
+        numCartas = n;
+    }
+    
+    //saca de la baza las cartas seleccionadas para llevarlas al pozo
+    public Carta[] quitarSeleccionadas(){
+        Carta caux[] = new Carta[indexCartasAllevar];
+        for(int i = 0; i<indexCartasAllevar; i++){
+            caux[i] = new Carta(null,null);            
+            caux[i].copiar(cartas[cartasAllevar[i]]);
+            cartas[cartasAllevar[i]].borrar();
+        }
+        indexCartasAllevar = 0;        
+        return caux;
+    }
+    public Carta[] quitarCartas(){
+        Carta[] caux = new Carta[numCartas];
+        for(int i = 0; i<numCartas; i++){
+            caux[i] = new Carta(null,null);            
+            caux[i].copiar(cartas[i]);
+            cartas[i].borrar();
+        }
+        numCartas = 0;
+        return caux;
+    }
+    public void borrarSeleccionadas(){  
+        for(int i = 0; i<indexCartasAllevar;i++){
+            cartas[cartasAllevar[i]].activar();
+        }
+        indexCartasAllevar = 0;        
+    }
+    
+    //Devuelve true si la baza esta vacia
+    public boolean esVacia(){
+         return (numCartas == 0);
+    }
+    
+    //devuelve la suma de las cartas que estan seleccionadas (activadas)
+    public int getSumaSeleccionadas(){
+        int suma = 0;
+        for(int i = 0 ; i<indexCartasAllevar; i++){
+            suma +=  cartas[cartasAllevar[i]].num;            
+        }
+        return suma;
+    }
+    //devuelve la cantidad de cartas de la baza
+    public int getCantCartas(){
+        return numCartas;
+    }
+     public void setCoordenadas(){
+        cartas[0].setXY(25,130);  cartas[1].setXY(90,130);  cartas[2].setXY(155,130);cartas[3].setXY(215,130); 
+        cartas[4].setXY(25, 220); cartas[5].setXY(90,220);  cartas[6].setXY(155,220);cartas[7].setXY(215,220);
+        cartas[8].setXY(280,130); cartas[9].setXY(280,235); cartas[10].setXY(340,130); cartas[11].setXY(340,220);
+    }
+    
+    //dada una carta de la baraja, devuelve las posiciones de las cartas de la mesa 
+    //con la cual esa carta puede sumar 15. Se busca la mayor cantidad de cartas posibles.
+    public int[] devolverPosParaLlevar(Carta carta){
+        int[] solucion = null;
+        if(numCartas == 1){
+            if(carta.num + cartas[0].num == 15){
+                solucion = new int[1];
+                solucion[0] = 0;
+                return solucion;
+            }else
+                return null;
+        }
+        else if(numCartas == 2){
+            if((carta.num + cartas[0].num + cartas[1].num) == 15){
+                solucion = new int[2];
+                solucion[0] = 0; solucion[1] = 1;
+                return solucion;
+            }else if((carta.num + cartas[0].num) == 15){
+                solucion = new int[1];
+                solucion[0] = 0;
+                return solucion;
+            }else if((carta.num + cartas[1].num) == 15){
+                solucion = new int[1];
+                solucion[0] = 1;
+                return solucion;
+            }else return null;
+        }else{ 
+            int i, cant;            
+            
+            C = numCartas;
+            W = 15 - carta.num;
+            //cargamos cartas en baza auxiliar
+            baza = new int[C+1];
+            baza[0] = 0;             
+            for(i=1; i<=C; i++){
+                baza[i] = cartas[i-1].num;                
+            }
+        
+            V = new int[C+1][W+1];
+            cant = mochila();
+            if(cant>0){
+                solucion = new int[cant];
+                getSolucion(solucion, C, W, cant-1);
+            }else solucion = null;
+            
+		    return solucion;
+        	
+        }
+    }   
+    
+/*********** Programacion dinamica para obtener el mayor numero de cartas que sumen 15*********
+ *********** Modificacion al problema de la mochila */
+ 
+private int W;
+private int C;
+private int[][] V;
+private int[] baza;
+
+private int mochila(){ 
+    for(int k = 0; k<=W; k++) V[0][k] = 0;
+    
+	for(int i = 1; i<=C; i++){
+		V[i][0] = 0;
+		for(int j = 1 ; j<= W; j++){
+			if(i == 1 && (j < baza[i] || j> baza[i]))
+				V[i][j] = 0;
+			else if(i == 1){
+				V[i][j] = 1;
+			}else if(i>1){
+				if(j<baza[i]) V[i][j] = V[i-1][j];
+				else if(j == baza[i]){
+					if(V[i-1][j]>1) V[i][j] = V[i-1][j];
+					else V[i][j] = 1;
+				}else{
+					if(V[i-1][j]==0 && V[i-1][j-baza[i]]==0) V[i][j] = 0;
+					else if(V[i-1][j]< V[i-1][j-baza[i]]+1) V[i][j] = V[i-1][j-baza[i]] + 1;
+					else V[i][j] = V[i-1][j];
+				}
+			}
+		}
+	}
+	return V[C][W];	
+	
+ }/*Tiempo de ejecucion: T(C,W) = c1*C*W + c2*C pertenece O(C*W) */
+ 
+ private void getSolucion(int[] A, int i, int j, int n){
+	if(i> 0 && j > 0 && n>=0){
+		if(V[i][j] == V[i-1][j])
+			getSolucion(A, i-1, j, n);
+		else{
+			getSolucion(A,i-1,j-baza[i], n-1);
+			A[n] = i-1;
+		}
+	}
+ }
+}

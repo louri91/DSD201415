@@ -1,0 +1,110 @@
+package Escoba;
+
+import java.awt.*;
+import java.awt.event.*;
+
+public class Ayuda extends Frame implements WindowListener,ActionListener
+{
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private TextArea texto;
+	private Button bOk;	
+	boolean fComponentsAdjusted = false; // Used for addNotify check.
+	private final String s = "Reglas del juego\n\n"+
+	                        "Se juega con una baraja española de 40 cartas. El valor de las cartas es:"+
+	                        "1 para el as. \nSu valor numérico para las cartas comprendidas entre el dos y el siete.\n"+
+	                        "8 para la sota. \n9 para el caballo y \n10 para el rey.\n"+
+	                        "Pueden jugar dos, tres, cuatro o seis jugadores. Aunque en el juego real se suele jugar por\n"+
+	                        "equipos cuando hay cuatro o seis jugadores, en nuestro caso el juego es siempre individual.\n"+
+	                        "El encargado de dar las cartas reparte tres a cada jugador y coloca otras cuatro, descubiertas,\n"+
+	                        "en la mesa. Las cartas sobrantes las guarda para la próxima ronda. Comienza el juego el jugador \n"+
+	                        "siguiente o mano. En el juego el sistema reparte las cartas.\n"+
+	                        "\nEl jugador mano intentará hacer Escoba. Una Escoba está formada por una carta de las que tiene\n"+
+	                        "en la mano y una o más cartas de las que hay en la mesa, y la suma total de las cartas de la baza \n"+
+	                        "debe ser siempre 15, según el valor indicado anteriormente. El jugador enseñará la carta de su mano\n"+
+	                        "utilizada para hacer escoba y guardará ésta y todas las de la mesa que forman la escoba.\n"+
+	                        "En caso de que no pueda conseguir Escoba seleccionará una de las cartas que tiene en la mano \n"+
+	                        "y la colocará en la mesa, descubierta, junto con las demás. De esta forma continuan jugando todos \n"+
+	                        "por turno hasta agotar las cartas repartidas, momento en el que el jugador que reparte, entregará \n"+
+	                        "tres nuevas cartas a cada jugador hasta agotar el mazo completo.\n"+
+	                        "\nCuando se hayan agotado todas las cartas del mazo, el jugador que haya realizado la última escoba será \n"+
+	                        "quien se lleve todas las cartas sobrantes de la mesa (pero no se anotará Escoba). Una vez terminado \n"+
+	                        "el juego se realiza el recuento de puntos asignandose un punto por cada uno de los siguientes aspectos:\n"+
+	                        "\nPor cada escoba que tenga cada jugador.\n"+
+	                        "El jugador que más cartas tiene.\nEl jugador que más oros tiene.\nEl jugador que más sietes tiene.\nEl jugador que tiene el siete de oros.\n"+
+	                        "En caso de empate en alguno de los apartados de cartas, oros o sietes no se adjudica el punto a ningún jugador.\n"+
+                            "Cada jugador acumula sus puntos ganando el primero que supera el número de puntos establecido de antemano.\n";
+	
+	public Ayuda(){
+		setLayout(null);
+		setSize(700,290);
+		setBackground(new Color(12632256));
+		texto = new TextArea();
+		texto.setText(s);
+		texto.setBounds(1,0,699,260);
+		texto.setFont(new Font("Serif", Font.BOLD, 16));
+		texto.setEditable(false);
+		add(texto);
+		bOk = new Button("Ok");
+		bOk.setBounds(480,265,84,22);
+		add(bOk);		
+		setTitle("Reglas del Juego");
+		setResizable(false);
+		this.addWindowListener(this);		
+		bOk.addActionListener(this);
+    }
+
+    public void setVisible(boolean b){
+		if(b){
+			setLocation(50, 50);
+		}
+		super.setVisible(b);
+	}
+
+	public void addNotify()
+	{
+	    // Record the size of the window prior to calling parents addNotify.
+	    Dimension d = getSize();
+	    super.addNotify();
+		if (fComponentsAdjusted) return;
+
+		// Adjust components according to the insets
+		setSize(getInsets().left + getInsets().right + d.width, getInsets().top + getInsets().bottom + d.height);
+		Component components[] = getComponents();
+		for (int i = 0; i < components.length; i++)	{
+			Point p = components[i].getLocation();
+			p.translate(getInsets().left, getInsets().top);
+			components[i].setLocation(p);
+		}
+		fComponentsAdjusted = true;
+	}    
+
+    public void	windowActivated(WindowEvent e){}
+    public void windowClosed(WindowEvent e) {}
+    public void windowDeactivated(WindowEvent e){} 
+    public void windowDeiconified(WindowEvent e){} 
+    public void windowIconified(WindowEvent e){} 
+    public void windowOpened(WindowEvent e) {}
+ 
+    public void windowClosing(WindowEvent event){
+	    Object object = event.getSource();
+    	if (object == Ayuda.this)
+	    		setVisible(false);
+    }
+		
+	
+    public void actionPerformed(ActionEvent e){
+	    Object o = e.getSource();
+	    if(o==bOk)      setVisible(false);
+	    
+    }
+    public void update(Graphics g){
+        paint(g);
+    }
+    public void paint(Graphics g){
+        g.setColor(Color.blue.darker());
+        g.drawString("Programado por Carlos Rodriguez e Ignacio Fernandez, Año 2008",10,295);
+    }
+}

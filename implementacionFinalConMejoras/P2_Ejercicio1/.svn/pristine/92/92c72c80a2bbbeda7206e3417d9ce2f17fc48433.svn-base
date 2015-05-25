@@ -1,0 +1,9 @@
+package ChatPublico;
+
+import java.rmi.*;
+
+public interface ClienteInterface {
+	public void avisar(String mensaje) throws RemoteException;
+	public String getNombreUsuario() throws RemoteException;
+
+}

@@ -1,0 +1,125 @@
+package Chat_v2;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.JFrame;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.JButton;
+
+public class ClientGUI extends JFrame{
+	private JTextField mensaje;
+	private JTextArea listaMensajes;
+	private JTextArea clientesConectados;
+	private JButton btnEnviar;
+	private JButton btnConectar;
+	private JButton btnDesconectar;
+	private JButton btnSalir;
+	
+	public ClientGUI(Client cliente) {
+		this.setBounds(0,0,763,594);
+		setResizable(false);
+		getContentPane().setLayout(null);
+		
+		listaMensajes = new JTextArea();
+		listaMensajes.setEditable(false);
+		listaMensajes.setBounds(6, 6, 579, 433);
+		getContentPane().add(listaMensajes);
+		
+		clientesConectados = new JTextArea();
+		clientesConectados.setEditable(false);
+		clientesConectados.setBounds(597, 6, 159, 433);
+		getContentPane().add(clientesConectados);
+		
+		mensaje = new JTextField();
+		mensaje.setBounds(6, 478, 472, 48);
+		getContentPane().add(mensaje);
+		mensaje.setColumns(10);
+		
+		btnEnviar = new JButton("Enviar");
+		btnEnviar.addActionListener(new ActionListener()
+	    {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if(!mensaje.getText().isEmpty()){
+					cliente.enviar();
+					getRootPane().setNextFocusableComponent(mensaje);
+				}
+			}
+	    });
+		btnEnviar.setBounds(490, 489, 82, 29);
+		btnEnviar.setEnabled(false);
+		getContentPane().add(btnEnviar);
+		
+		btnConectar = new JButton("Conectar");
+		btnConectar.addActionListener(new ActionListener()
+	    {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String auxiliar = mensaje.getText();
+				auxiliar = auxiliar.replaceAll("\\s+", "");
+				auxiliar.toUpperCase();
+				if(auxiliar.isEmpty()){
+					listaMensajes.setText("Tienes que especificar primero tu nickname\n");
+				}else{
+				cliente.conectar();
+				getRootPane().setNextFocusableComponent(mensaje);
+				}
+			}
+	    });
+		btnConectar.setBounds(621, 451, 117, 29);
+		getContentPane().add(btnConectar);
+		getRootPane().setDefaultButton(btnConectar);
+
+		
+		btnDesconectar = new JButton("Desconectar");
+		btnDesconectar.addActionListener(new ActionListener()
+	    {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				getRootPane().setDefaultButton(btnConectar);
+				cliente.desconectar();
+			}
+	    });
+		btnDesconectar.setEnabled(false);
+		btnDesconectar.setBounds(621, 489, 117, 29);
+		getContentPane().add(btnDesconectar);
+		
+		btnSalir = new JButton("Salir");
+		btnSalir.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				cliente.desconectar();
+				System.exit(0);
+			}
+		});
+		btnSalir.setBounds(621, 530, 117, 29);
+		getContentPane().add(btnSalir);
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		this.setVisible(true);
+	}
+
+	public JTextArea getListaMensajes() {
+		return listaMensajes;
+	}
+
+	public JTextField getMensaje() {
+		return mensaje;
+	}
+
+	public JTextArea getClientesConectados() {
+		return clientesConectados;
+	}
+
+	public JButton getBtnConectar() {
+		return btnConectar;
+	}	
+
+	public JButton getBtnDesconectar() {
+		return btnDesconectar;
+	}
+
+	public JButton getBtnEnviar() {
+		return btnEnviar;
+	}
+}

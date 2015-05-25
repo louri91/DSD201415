@@ -1,0 +1,443 @@
+package Escoba;
+
+
+public class Juego 
+{
+    private static final int CPU = 0, JUGADOR = 1;
+       
+    Puntaje puntosCpu,                  //Puntaje de los jugadores
+            puntosJug;
+        
+    private Baraja barajah, barajacpu;  //Barajas de los jugadores
+    private Baza baza;                  //Cartas de la mesa , la llamaremos "Baza"
+    private Pozo pozoh, pozocpu;        //Pozo de cartas de cada jugador.
+    Mazo mazo;                          //Mazo de cartas del juego.
+    private Escoba app;                 //Referencia al applet
+    
+    private int turno;                  //CPU ó JUGADOR, determina quien tiene el turno.
+    private Carta cartaActiva;          //Carta de la baraja que selecciono el jugador.
+    private Carta[] seleccionadas;      //Cartas de la baza que selecciono el jugador para llevar.
+    private int numJugada;
+    private int llevoUltimo = -1;       //CPU ó JUGADOR, determina quien fue el ultimo que llevo cartas al pozo.
+    private boolean animando;
+    public boolean finJuego;
+    
+    public Juego(Escoba applet){
+        app = applet;
+        cartaActiva = new Carta(app, this);
+        mazo = new Mazo(app, this);        
+        barajah = new Baraja();    barajacpu = new Baraja();   baza = new Baza();
+        pozoh = new Pozo(260,427); pozocpu = new Pozo(260,-88);        
+        puntosCpu = new Puntaje(); puntosJug = new Puntaje();
+    }
+    
+    public void comenzar(boolean inicio){
+        if(finJuego==true){
+                finalizar();
+                finJuego = false; 
+        }
+        puntosCpu.inicializar();  puntosJug.inicializar();    mazo.inicializar();        
+        baza.inicializar();   pozoh.inicializar();  pozocpu.inicializar();        
+        turno = JUGADOR;  llevoUltimo = -1;    
+        //Pongo las 4 cartas en la mesa
+        for(int i = 0; i<4;i++) baza.insertar(mazo.devolverCarta());
+        baza.setCoordenadas();
+        if(!inicio) repartirCartas();
+    }
+    
+    public void repartirCartas(){             
+        if(mazo.getCantCartas()>0){
+            barajah.inicializar();    barajacpu.inicializar();
+            barajacpu.setBarajaCpu();
+            //repartimos cartas a los jugadores
+            barajah.insertar(mazo.devolverCarta());  barajacpu.insertar(mazo.devolverCarta());
+            barajah.insertar(mazo.devolverCarta());  barajacpu.insertar(mazo.devolverCarta());
+            barajah.insertar(mazo.devolverCarta());  barajacpu.insertar(mazo.devolverCarta());                        
+            barajah.setCoordenadas(false);  barajacpu.setCoordenadas(true);            
+            numJugada = 1;  animando = false; 
+            app.pintarTodo();
+        }else{
+            finJuego = true;
+            if(!baza.esVacia()){
+                llevarAlPozo();
+            }
+            else{
+                calcularPuntajes();
+                app.pintarTodo();
+            }
+        }        
+    }
+    public String getTurno(){
+        if(turno == CPU)   return "MI TURNO...";
+        else  return "TU TURNO";
+    }
+    public String getGanador(){
+        if(puntosJug.total > puntosCpu.total) return new String("TU GANAS");
+        else if(puntosJug.total < puntosCpu.total) return new String("TU PIERDES");
+        else return new String("EMPATE");
+    }
+    
+    /* tirarHumano: es llamado desde la clase Carta, luego de terminar la animacion
+                    de la carta moviendose hacia la baza.
+     */
+    public void tirarCartaAbaza(){
+        baza.insertar(cartaActiva);
+        cartaActiva.borrar();
+        baza.borrarSeleccionadas();
+        if(turno == JUGADOR){ 
+            turno = CPU;
+            app.pintarTodo();            
+            if(numJugada==6) repartirCartas();
+            else{
+                numJugada++;
+                tirarCartaCPU();
+            }
+        }
+        else{ 
+            turno = JUGADOR;            
+            app.pintarTodo();
+            if(numJugada==6) repartirCartas();
+            else numJugada++;
+        }     
+        animando = false;
+    }
+    
+    public void seleccionarCarta(int x , int y){        
+       if(turno==JUGADOR && !finJuego && !animando){
+            Carta caux;            
+            caux = barajah.activar(x, y);
+            if(caux != null){                
+                cartaActiva.copiar(caux); 
+                if(baza.esVacia()){
+                    barajah.quitarSeleccionada(); 
+                    animando = true;
+                    cartaActiva.irHaciaBaza(baza.getXcarta(),baza.getYcarta());
+                    //Espera hasta que la carta llegue a la baza, luego contiua en tirarHumano()
+                }
+                else{
+                    int suma = baza.getSumaSeleccionadas() + cartaActiva.num;
+                    barajah.quitarSeleccionada(); 
+                    if(suma == 15){                         
+                         //playSound();                         
+                         llevarAlPozo();                        
+                    }else{                        
+                        animando = true;
+                        cartaActiva.irHaciaBaza(baza.getXcarta(),baza.getYcarta());                                                        
+                    }
+                }//end if baza.esVacia()
+            }//End if caux!=null
+            else{ 
+                baza.activar(x, y);
+                app.pintarTodo();
+            }
+       }
+    }
+    
+    public void tirarCartaCPU(){
+       if(turno == CPU){
+            cpuElegirCartas();       
+            int suma = baza.getSumaSeleccionadas() + cartaActiva.num;
+            barajacpu.quitarSeleccionada();  
+            if(suma == 15){                
+                llevarAlPozo();                    
+            }else{        
+                animando = true;
+                cartaActiva.irHaciaBaza(baza.getXcarta(),baza.getYcarta());
+            }            
+        }
+    }
+    public void insertarCartasEnPozo(){
+        if(!finJuego){
+            if(turno == JUGADOR){
+                pozoh.insertarCartas(seleccionadas);
+                pozoh.insertar(cartaActiva);
+                llevoUltimo = JUGADOR;
+                turno = CPU;             
+                app.pintarTodo(); 
+                if(numJugada==6) repartirCartas();
+                else{
+                    numJugada++;
+                    tirarCartaCPU();             
+                }            
+            }else{
+                pozocpu.insertarCartas(seleccionadas);
+                pozocpu.insertar(cartaActiva);
+                llevoUltimo = CPU;
+                turno = JUGADOR;
+                app.pintarTodo(); 
+                if(numJugada==6) repartirCartas();
+                else numJugada++;
+            }              
+            animando = false;
+        }else{
+            if(llevoUltimo == JUGADOR){
+                pozoh.insertarCartas(seleccionadas);
+            }else{
+                pozocpu.insertarCartas(seleccionadas);
+            }
+            calcularPuntajes();
+            app.pintarTodo();
+        }
+    }
+    
+    private void llevarAlPozo(){
+       int i;      
+       animando = true;
+       if(!finJuego){
+           seleccionadas = baza.quitarSeleccionadas();
+           if(turno == JUGADOR){
+              baza.acomodarCartas();
+              if(baza.esVacia()){
+                   puntosJug.escobas++; 
+              }
+              for(i = 0; i<seleccionadas.length;i++){
+                   seleccionadas[i].irHaciaPozo(pozoh.getPosX(),pozoh.getPosY(),false);
+              }                  
+              cartaActiva.irHaciaPozo(pozoh.getPosX(),pozoh.getPosY(),true);           
+           }
+           else{
+               baza.acomodarCartas();
+               if(baza.esVacia()){
+                   puntosCpu.escobas++; 
+               }
+               for(i = 0; i<seleccionadas.length;i++){
+                    seleccionadas[i].irHaciaPozo(pozocpu.getPosX(),pozocpu.getPosY(),false);
+               }               
+               cartaActiva.irHaciaPozo(pozocpu.getPosX(),pozocpu.getPosY(),true);                       
+           }
+       }else{
+            seleccionadas = baza.quitarCartas();
+            if(llevoUltimo == JUGADOR){
+                for(i = 0; i<(seleccionadas.length-1);i++){
+                   seleccionadas[i].irHaciaPozo(pozoh.getPosX(),pozoh.getPosY(),false);
+               }
+               seleccionadas[i].irHaciaPozo(pozoh.getPosX(),pozoh.getPosY(),true);
+            }else{
+                for(i = 0; i<(seleccionadas.length-1);i++){
+                    seleccionadas[i].irHaciaPozo(pozocpu.getPosX(),pozocpu.getPosY(),false);
+               }
+               seleccionadas[i].irHaciaPozo(pozocpu.getPosX(),pozocpu.getPosY(),true);
+            }
+       }
+    }
+    private void cpuElegirCartas(){
+        boolean eligio = false;
+        int[] cartasAllevar = null;
+        int[] cartas1=null,cartas2=null,cartas3=null;
+        if(baza.esVacia()){
+            //versi tengo cartas menores que 5, si ok, tiro alguna de ella 
+            //sino tiro alguna de las otras.
+            int pos = barajacpu.hayMenoresA5();        
+            if(pos>=0){
+                barajacpu.activar(pos);
+                cartaActiva.copiar(barajacpu.devolverCarta(pos));
+            }
+            else
+                cartaActiva.copiar(barajacpu.elegirRandomCarta());            
+            cartaActiva.setCpu(false);
+        }
+        else{
+            int pos = barajacpu.esta7Oro();
+            if(pos>=0){
+                //entonces ver si puede hacer escoba con las de la baza  si ok entonces llevarAlpozo, sino tratar de levantar baza.
+                // sino puede hacer  escoba, provar con levantar baza con la mayor cantidad de cartas.               
+                cartaActiva.copiar(barajacpu.devolverCarta(pos));                
+                cartasAllevar = baza.devolverPosParaLlevar(cartaActiva);
+                if(cartasAllevar != null){
+                    barajacpu.activar(pos);
+                    eligio = true;
+                }
+            }
+            if(!eligio){
+                //provar para cada carta de la baraja cual puede hacer escoba.
+                Carta caux = barajacpu.devolverCarta(0);
+                if(caux.num>0)
+                    cartas1 = baza.devolverPosParaLlevar(caux);
+                caux = barajacpu.devolverCarta(1);
+                if(caux.num>0)
+                    cartas2 = baza.devolverPosParaLlevar(caux);
+                caux = barajacpu.devolverCarta(2);
+                if(caux.num>0)
+                    cartas3 = baza.devolverPosParaLlevar(caux);
+                
+                int n = baza.getCantCartas();
+                if(cartas1!= null && (cartas1.length == n)){                    
+                    cartaActiva.copiar(barajacpu.devolverCarta(0));
+                    cartasAllevar = cartas1;
+                    barajacpu.activar(0);
+                }
+                else if(cartas2!= null && (cartas2.length == n)){
+                    cartaActiva.copiar(barajacpu.devolverCarta(1));
+                    cartasAllevar = cartas2;
+                    barajacpu.activar(1);
+                }
+                else if(cartas3!= null && (cartas3.length == n)){
+                    cartaActiva.copiar(barajacpu.devolverCarta(2));
+                    cartasAllevar = cartas3;
+                    barajacpu.activar(2);
+                }
+                else{
+                    if(cartas1!=null && cartas2 != null && cartas3!= null){
+                        if((cartas1.length >= cartas2.length) && (cartas1.length >= cartas3.length)){
+                            cartasAllevar = cartas1;
+                            cartaActiva.copiar(barajacpu.devolverCarta(0));
+                            barajacpu.activar(0);
+                        }
+                        else if((cartas2.length>= cartas1.length)&&(cartas2.length>=cartas3.length)){
+                            cartasAllevar = cartas2;
+                            cartaActiva.copiar( barajacpu.devolverCarta(1));
+                            barajacpu.activar(1);
+                        }
+                        else if((cartas3.length>= cartas1.length)&&(cartas3.length>=cartas2.length)){
+                            cartasAllevar = cartas3;
+                            cartaActiva.copiar( barajacpu.devolverCarta(2));
+                            barajacpu.activar(2);
+                        }
+                    }
+                    else if(cartas1!=null && cartas2!=null && cartas3 == null){
+                        if(cartas1.length >= cartas2.length){
+                            cartasAllevar = cartas1;
+                            cartaActiva.copiar( barajacpu.devolverCarta(0));
+                            barajacpu.activar(0);
+                        }
+                        else{
+                            cartasAllevar = cartas2;
+                            cartaActiva.copiar( barajacpu.devolverCarta(1));
+                            barajacpu.activar(1);
+                        }
+                    }
+                    else if(cartas1!=null && cartas2 == null && cartas3 != null){
+                        if(cartas1.length >= cartas3.length){
+                            cartasAllevar = cartas1;
+                            cartaActiva.copiar( barajacpu.devolverCarta(0));
+                            barajacpu.activar(0);
+                        }
+                        else{
+                            cartasAllevar = cartas3;
+                            cartaActiva.copiar( barajacpu.devolverCarta(2));
+                            barajacpu.activar(2);
+                        }
+                    }
+                    else if(cartas1==null && cartas2 != null && cartas3 != null){
+                        if(cartas2.length >= cartas3.length){
+                            cartasAllevar = cartas2;
+                            cartaActiva.copiar( barajacpu.devolverCarta(1));
+                            barajacpu.activar(1);
+                        }
+                        else{
+                            cartasAllevar = cartas3;
+                            cartaActiva.copiar( barajacpu.devolverCarta(2));
+                            barajacpu.activar(2);
+                        }
+                    }
+                    else if(cartas1!=null && cartas2 == null && cartas3 == null){
+                        cartasAllevar = cartas1;
+                        cartaActiva.copiar( barajacpu.devolverCarta(0));
+                        barajacpu.activar(0);
+                    }
+                    else if(cartas1==null && cartas2 != null && cartas3 == null){
+                        cartasAllevar = cartas2;    
+                        cartaActiva.copiar( barajacpu.devolverCarta(1));
+                        barajacpu.activar(1);
+                    }
+                    else if(cartas1==null && cartas2 == null && cartas3 != null){
+                        cartasAllevar = cartas3;
+                        cartaActiva.copiar( barajacpu.devolverCarta(2));
+                        barajacpu.activar(2);
+                    }   
+                    else{//no puede llevarse ninguna
+                        cartaActiva.copiar( barajacpu.elegirRandomCarta());
+                    }
+                }//else
+            }//end if !eligio
+            if(cartaActiva==null) 
+                cartaActiva.copiar( barajacpu.elegirRandomCarta());
+            
+            if(cartasAllevar!=null){
+                baza.activar(cartasAllevar);
+                app.pintarTodo();
+            }                        
+        } 
+    }
+    
+    private void calcularPuntajes(){
+        int sumaJug = 0, sumacpu = 0;
+        puntosCpu.mascartas = pozocpu.getCantCartas();
+        puntosJug.mascartas = pozoh.getCantCartas();
+        
+        if(puntosCpu.mascartas > puntosJug.mascartas) sumacpu++;
+        else if(puntosCpu.mascartas < puntosJug.mascartas) sumaJug++;
+        
+        puntosCpu.setenta = pozocpu.getCant(7);
+        puntosJug.setenta = pozoh.getCant(7);
+        
+        if(puntosJug.setenta > puntosCpu.setenta){  
+            sumaJug++;
+            puntosCpu.setenta = 0;
+            puntosJug.setenta = 1;
+        }        
+        else if(puntosJug.setenta < puntosCpu.setenta){
+            sumacpu++;
+            puntosCpu.setenta = 1;
+            puntosJug.setenta = 0;
+        }
+        else{
+           int n1 = pozocpu.getCant(6);
+           int n2 = pozoh.getCant(6);
+           if(n1 > n2){ 
+                sumacpu++;
+                puntosCpu.setenta = 1;
+                puntosJug.setenta = 0;
+           }
+           else if(n1<n2){
+                sumaJug++;
+                puntosCpu.setenta = 0;
+                puntosJug.setenta = 1;
+           }
+           else{
+               puntosCpu.setenta = 0;
+               puntosJug.setenta = 0;
+           }
+        }
+        puntosJug.velos = 0; puntosCpu.velos = 0;
+        if(pozoh.esta7oro()){
+            puntosJug.velos = 1;
+            sumaJug++;
+        }else{
+            sumacpu++;
+            puntosCpu.velos = 1;
+        }
+        puntosJug.masoros = pozoh.getCantOros();
+        puntosCpu.masoros = pozocpu.getCantOros();
+        if(puntosJug.masoros > puntosCpu.masoros)  sumaJug++;
+        else if(puntosJug.masoros < puntosCpu.masoros) sumacpu++;
+        sumacpu +=  puntosCpu.escobas;
+        sumaJug +=  puntosJug.escobas;
+        
+        puntosCpu.total =  sumacpu;
+        puntosJug.total =  sumaJug;
+            
+    }
+    
+    public void pintarAnim(){
+        
+        barajah.pintar();
+        barajacpu.pintar();
+        baza.pintar();
+        cartaActiva.pintar();
+        if(seleccionadas != null){
+            for(int i = 0; i<seleccionadas.length;i++) seleccionadas[i].pintar();
+        }        
+    }
+    public void pintarCartas(){
+        cartaActiva.pintar();
+        barajah.pintar();
+        barajacpu.pintar();
+        baza.pintar();
+    }
+    public void finalizar(){
+        barajacpu.detenerAnimaciones();
+        barajah.detenerAnimaciones();
+        baza.detenerAnimaciones();
+    }
+}
