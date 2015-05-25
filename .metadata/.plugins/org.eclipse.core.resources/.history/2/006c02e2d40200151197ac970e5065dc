@@ -1,0 +1,13 @@
+package cliente;
+
+public class ConversacionPrivada {
+	ChatClient sender;
+	ChatClient receiver;
+	public ConversacionPrivada(ChatClient sender, ChatClient receiver) {
+		super();
+		this.sender = sender;
+		this.receiver = receiver;
+	}
+	
+	
+}

@@ -1,0 +1,6 @@
+package cliente;
+
+public class ConversacionPrivada {
+	ChatClient sender;
+	ChatClient receiver;
+}

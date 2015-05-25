@@ -8,69 +8,122 @@ import java.util.List;
 
 public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
 
-  private List<ChatClient> connectedClients;
-  private List<Conn> conexionClientes;
-  private int contador = 0;
-  private int puerto = 1100;
-  private  String URL = "//localhost/RmiChatClient";
-  
-  protected ChatServerImpl() throws RemoteException {
-    super(0);
-    connectedClients = Collections.synchronizedList(new ArrayList<ChatClient>());
-  }
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private List<ChatClient> connectedClients;
+	private List<ConversacionPrivada> conversacionesPrivadas;
+	private List<Conn> conexionClientes;
+	private int puerto = 1100;
+	private final static String URL = "//localhost/RmiChatClient";
 
-  @Override public void connect(ChatClient chatClient, String nick) {
-    connectedClients.add(chatClient);
-    String direccion = comprobarDireccion(URL+contador);
-    int puerto = comprobarPuerto(this.puerto);
-    Conn conexion = new Conn(nick,direccion,puerto);
-    conexionClientes.add(conexion);
-  }
-  
-  public String comprobarDireccion(String url){
-	  for(Conn conexion : conexionClientes){
-		  if(conexion.getConexionURL().equals(url)){
-			  contador++;
-		  }
-		  else{
-			  break;
-		  }
-		  
-	  }
-	return URL+contador;
-  }
-  
-  public int comprobarPuerto(int puerto){
-	  for(Conn conexion : conexionClientes){
-		  if(conexion.getPuertoConexion()==puerto){
-			  puerto++;
-		  }else{
-			  break;
-		  }
-	  }
-	  return puerto;
-  }
+	protected ChatServerImpl() throws RemoteException {
+		super(0);
+		connectedClients = Collections
+				.synchronizedList(new ArrayList<ChatClient>());
+		conexionClientes = Collections.synchronizedList(new ArrayList<Conn>());
+		conversacionesPrivadas = Collections
+				.synchronizedList(new ArrayList<ConversacionPrivada>());
+	}
 
-  @Override 
-  public void disconnect(ChatClient chatClient, String nick) {
-    if (connectedClients.contains(chatClient)) {
-      connectedClients.remove(chatClient);
-      for(Conn conexion : conexionClientes){
-    	  if(conexion.getNick().equals(nick)){
-    		  conexionClientes.remove(conexion);
-    	  }
-      }
-    }
-  }
+	@Override
+	public int connect(ChatClient chatClient, String nick) {
+		connectedClients.add(chatClient);
+		String direccion = URL + puerto;
+		System.out.println(direccion);
+		Conn conexion = new Conn(nick, direccion, puerto);
+		conexionClientes.add(conexion);
+		for (ChatClient ch : connectedClients) {
+			try {
+				ch.callback();
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+		}
+		puerto++;
+		return puerto - 1;
+	}
+	@Override
+	public void connectPrivate(String nombreUsuario, String nick) {
+		ChatClient sender;
+		ChatClient receiver;
+		for (ChatClient ch : connectedClients) {
+			try {
+				if(ch.getNick().equals(nombreUsuario)){
+					sender = ch;
+					if (ch.getNick().equals(nick)) {
+						receiver = ch;
+						ConversacionPrivada cP = new ConversacionPrivada(sender,receiver);
+						conversacionesPrivadas.add(cP);
+						for (Conn conexion : conexionClientes) {
+							if (conexion.getNick().equals(nombreUsuario)) {
+								ch.conectarClientes(nombreUsuario, nick, conexion.getConexionURL());
+							}
+						}
+					}
+				}
+				
+				
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+		}
+		
 
-  @Override
+	}
+
+
+	@Override
+	public void disconnect(ChatClient chatClient, String nick) {
+		if (connectedClients.contains(chatClient)) {
+			connectedClients.remove(chatClient);
+			for (Conn conexion : conexionClientes) {
+				if (conexion.getNick().equals(nick)) {
+					conexionClientes.remove(conexion);
+				}
+			}
+		}
+	}
+
+	@Override
 	public List<ChatClient> getListaConectados() throws RemoteException {
 		return connectedClients;
 	}
 
+	@Override
 	public List<Conn> getConexionClientes() {
 		return conexionClientes;
 	}
-  
-}
 
+	@Override
+	public void setPuerto(int puerto) {
+		this.puerto = puerto;
+	}
+
+	@Override
+	public int getPuerto() {
+		return puerto;
+	}
+
+	@Override
+	public String getUrl() {
+		return URL;
+	}
+
+	@Override
+	public String getUrl(String nick) throws RemoteException {
+		for (Conn conexion : conexionClientes) {
+			if (conexion.getNick().equals(nick)) {
+				return conexion.getConexionURL();
+			}
+		}
+		return null;
+	}
+
+	public List<ConversacionPrivada> getConversacionesPrivadas() {
+		return conversacionesPrivadas;
+	}
+	
+
+}
