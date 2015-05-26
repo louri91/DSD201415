@@ -2,7 +2,10 @@ package cliente;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
+import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
@@ -21,6 +24,8 @@ import java.awt.SystemColor;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 
+import javax.swing.JList;
+
 public class ClientGUI extends JFrame{
 	private JTextField mensaje;
 	private JTextArea clientesConectados;
@@ -29,27 +34,34 @@ public class ClientGUI extends JFrame{
 	private JButton btnDesconectar;
 	private JButton btnSalir;
 	private JPanel panel_1;
+	private JList<String> listUsuarios;
+	private DefaultListModel<String> model = new DefaultListModel<>();
 	
 	public ClientGUI(Client cliente) {
-		this.setBounds(0,0,763,594);
+		this.setBounds(0,0,812,646);
 		setResizable(false);
 		getContentPane().setLayout(null);
 		
 		panel_1 = new JPanel();
-		panel_1.setBorder(new TitledBorder(null, "Usuarios Conectados", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		panel_1.setBounds(18, 50, 728, 417);
+		panel_1.setBorder(new TitledBorder(null, "Mensajes", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panel_1.setBounds(18, 50, 595, 417);
 		getContentPane().add(panel_1);
 		panel_1.setLayout(null);
 		
 		clientesConectados = new JTextArea();
-		clientesConectados.setBounds(16, 21, 693, 373);
+		clientesConectados.setBounds(16, 21, 563, 373);
 		panel_1.add(clientesConectados);
 		clientesConectados.setBackground(SystemColor.menu);
 		clientesConectados.setEditable(false);
 		clientesConectados.setEnabled(false);
 		
 		mensaje = new JTextField();
-		mensaje.setBounds(18, 494, 472, 48);
+		mensaje.setBounds(18, 518, 472, 48);
+		this.addWindowListener( new WindowAdapter() {
+		    public void windowOpened( WindowEvent e ){
+		        mensaje.requestFocus();
+		    }
+		}); 
 		getContentPane().add(mensaje);
 		mensaje.setColumns(10);
 		
@@ -58,7 +70,7 @@ public class ClientGUI extends JFrame{
 	    {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if(!mensaje.getText().isEmpty()){
+				if(!listUsuarios.getSelectedValue().toString().isEmpty()){
 					try {
 						cliente.conectarClientesPrivado();
 					} catch (RemoteException e1) {
@@ -69,7 +81,7 @@ public class ClientGUI extends JFrame{
 				}
 			}
 	    });
-		btnEnviar.setBounds(503, 505, 82, 29);
+		btnEnviar.setBounds(502, 529, 82, 29);
 		btnEnviar.setEnabled(false);
 		getContentPane().add(btnEnviar);
 		
@@ -94,7 +106,7 @@ public class ClientGUI extends JFrame{
 				}
 			}
 	    });
-		btnConectar.setBounds(621, 474, 117, 29);
+		btnConectar.setBounds(648, 486, 117, 29);
 		getContentPane().add(btnConectar);
 		getRootPane().setDefaultButton(btnConectar);
 
@@ -106,10 +118,11 @@ public class ClientGUI extends JFrame{
 			public void actionPerformed(ActionEvent e) {
 				getRootPane().setDefaultButton(btnConectar);
 				cliente.desconectar();
+				getRootPane().repaint();
 			}
 	    });
 		btnDesconectar.setEnabled(false);
-		btnDesconectar.setBounds(621, 505, 117, 29);
+		btnDesconectar.setBounds(648, 529, 117, 29);
 		getContentPane().add(btnDesconectar);
 		
 		btnSalir = new JButton("Salir");
@@ -119,12 +132,22 @@ public class ClientGUI extends JFrame{
 				System.exit(0);
 			}
 		});
-		btnSalir.setBounds(621, 537, 117, 29);
+		btnSalir.setBounds(648, 570, 117, 29);
 		getContentPane().add(btnSalir);
 		
 		JLabel lblIndiqueConQu = new JLabel("Indique con qué usuario se quiere comunicar");
 		lblIndiqueConQu.setBounds(18, 22, 728, 16);
 		getContentPane().add(lblIndiqueConQu);
+		
+		JPanel panel = new JPanel();
+		panel.setBorder(new TitledBorder(null, "Usuarios conectados", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panel.setBounds(619, 50, 187, 417);
+		getContentPane().add(panel);
+		panel.setLayout(null);
+		
+		listUsuarios = new JList<String>(model);
+		listUsuarios.setBounds(19, 22, 151, 374);
+		panel.add(listUsuarios);
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		this.setVisible(true);
 	}
@@ -148,4 +171,18 @@ public class ClientGUI extends JFrame{
 	public JButton getBtnEnviar() {
 		return btnEnviar;
 	}
+
+	public JList<String> getListUsuarios() {
+		return listUsuarios;
+	}
+	
+	public DefaultListModel<String> getModel() {
+		return model;
+	}
+
+	public void setModel(DefaultListModel<String> model) {
+		this.model = model;
+	}
+	
+	
 }

@@ -86,7 +86,15 @@ public class ChatClientImpl extends UnicastRemoteObject implements ChatClient {
 	public void callback(String content, String nombreUsuario)
 			throws RemoteException {
 		System.out.println(nombreUsuario + ": " + content);
-		cliente.actualizarInterfazMensajes(content, nombreUsuario);
+
+		if(content.equals(" se ha conectado")){
+			cliente.actualizarInterfazPublica(nombreUsuario+content, "Servidor");
+		}else if(content.equals(" se ha desconectado")){
+			cliente.actualizarInterfazPublica(nombreUsuario+content, "Servidor");
+		}
+		else{
+			cliente.actualizarInterfazMensajes(content, nombreUsuario);
+		}
 
 	}
 }
