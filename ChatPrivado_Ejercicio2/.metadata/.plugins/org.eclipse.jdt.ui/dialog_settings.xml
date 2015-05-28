@@ -27,7 +27,17 @@
 		<item value="1" key="VisibilityModifier"/>
 		<item value="false" key="FinalModifier"/>
 	</section>
+	<section name="OverrideMethodDialog">
+		<item value="true" key="showtypes"/>
+	</section>
 	<section name="quick_assist_proposal_size">
+	</section>
+	<section name="DialogBounds_OverrideMethodDialog">
+		<item value="515" key="DIALOG_WIDTH"/>
+		<item value="1|.Helvetica Neue DeskInterface|11.0|0|COCOA|1|.HelveticaNeueDeskInterface-Regular" key="DIALOG_FONT_NAME"/>
+		<item value="410" key="DIALOG_HEIGHT"/>
+		<item value="703" key="DIALOG_X_ORIGIN"/>
+		<item value="233" key="DIALOG_Y_ORIGIN"/>
 	</section>
 	<section name="completion_proposal_size">
 	</section>

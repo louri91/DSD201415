@@ -15,6 +15,8 @@ public class ChatClientImpl extends UnicastRemoteObject implements ChatClient {
 	@Override
 	public void callback(String content, String nombreUsuario) {
 		interfaz.getListaMensajes().append(nombreUsuario+": " + content+"\n");
+		interfaz.getListaMensajes().setCaretPosition(
+				interfaz.getListaMensajes().getText().length());
 		System.out.println(nombreUsuario+": " + content);
 		cliente.actualizarListaUsuarios();
 	}

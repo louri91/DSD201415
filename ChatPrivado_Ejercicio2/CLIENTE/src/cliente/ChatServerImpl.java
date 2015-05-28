@@ -67,17 +67,42 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
 	 * cliente una vez decida cerrar sesión en nuestro programa. El método
 	 * eliminará dicho cliente de la lista de connectedClients, así como
 	 * eliminará el objeto de conexión del mismo.
+	 * 
+	 * @throws RemoteException
 	 */
 	@Override
-	public void disconnect(ChatClient chatClient, String nick) {
-		if (connectedClients.contains(chatClient)) {
-			connectedClients.remove(chatClient);
+	public void disconnect(ChatClient chatClient, String nick)
+			throws RemoteException {
+		Conn aux = new Conn("","",0);
+		ChatClient auxiliar = null;
+		boolean encontrado= false;
+		boolean encontrado2 = false;
+		for(int i=0;i<connectedClients.size();i++){
+			if(connectedClients.get(i).getNick().equals(nick)){
+				encontrado2 = true;
+				auxiliar = connectedClients.get(i);
+				System.out.println(auxiliar.getNick());
+			}
 		}
-		for (ChatClient ch : connectedClients) {
-			try {
+		if (encontrado2) {
+			connectedClients.remove(auxiliar);
+			System.out.println("ENCONTRADO2");
+			for (Conn conexion : conexionClientes) {
+				if (conexion.getNick().equals(nick))
+				{	System.out.println(conexion.getNick());
+					encontrado = true;
+					aux = conexion;
+				}
+			}
+			if(encontrado){
+				conexionClientes.remove(aux);
+			}
+		}
+		System.out.println(connectedClients.toString());
+		
+		if (!(connectedClients.isEmpty()) || !(connectedClients.size()==1)) {
+			for (ChatClient ch : connectedClients) {
 				ch.callback();
-			} catch (RemoteException e) {
-				e.printStackTrace();
 			}
 		}
 	}

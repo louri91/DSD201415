@@ -11,12 +11,14 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import javax.swing.JScrollPane;
 
 public class PrivateGUI extends JFrame {
 	private JTextField send;
 	private JTextArea mensajes;
 	private JPanel panel;
 	private JButton btnEnviar;
+	private JScrollPane scrollPane;
 
 	public PrivateGUI(Client cliente, String nombreConversacion) {
 		getContentPane().setLayout(null);
@@ -29,11 +31,14 @@ public class PrivateGUI extends JFrame {
 		panel.setBounds(6, 6, 438, 476);
 		getContentPane().add(panel);
 		panel.setLayout(null);
+		
+		scrollPane = new JScrollPane();
+		scrollPane.setBounds(18, 26, 401, 352);
+		panel.add(scrollPane);
 
 		mensajes = new JTextArea();
-		mensajes.setBounds(18, 26, 401, 352);
+		scrollPane.setViewportView(mensajes);
 		mensajes.setEditable(false);
-		panel.add(mensajes);
 
 		send = new JTextField();
 		send.setBounds(18, 390, 284, 64);
@@ -55,10 +60,10 @@ public class PrivateGUI extends JFrame {
 			}
 		});
 		btnEnviar.setBounds(314, 407, 117, 29);
-		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		getRootPane().setDefaultButton(btnEnviar);
 		panel.add(btnEnviar);
-
+		this.setResizable(false);
 		this.setVisible(true);
 	}
 

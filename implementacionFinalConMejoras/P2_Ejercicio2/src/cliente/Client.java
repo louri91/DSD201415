@@ -5,6 +5,7 @@ import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -84,7 +85,7 @@ public class Client {
 
 				LocateRegistry.createRegistry(puertoClient);
 				Naming.rebind(urlClient, client);
-				
+
 				avisarConectado(nombreUsuario);
 
 			}
@@ -113,29 +114,51 @@ public class Client {
 	 * @throws RemoteException
 	 */
 	public void conectarClientesPrivado() throws RemoteException {
+		boolean encontrado = false;
 		String nick;
 		nick = interfaz.getListUsuarios().getSelectedValue();
 
-		try {
-			ChatClient remoto = chatServer.getStub(nick);
-
-			String urlRemota = chatServer.getUrl(nick);
-			String miUrl = chatServer.getUrl(this.nombreUsuario);
-			System.out.println(urlRemota);
-			client = (ChatClient) Naming.lookup(urlRemota);
-			remoto.conectarClientes(this.nombreUsuario, nick, miUrl);
-
-			conversacionesActivas.put(nick, this.nombreUsuario);
-
-		} catch (MalformedURLException | RemoteException | NotBoundException e1) {
-			e1.printStackTrace();
+		if (!conversacionesActivas.isEmpty()) {
+			for (Entry<String, String> e : conversacionesActivas.entrySet()) {
+				if (e.getKey().equals(nick)) {
+					if (!framesActivos.isEmpty()) {
+						for (Entry<String, PrivateGUI> g : framesActivos
+								.entrySet()) {
+							if (g.getKey().equals(nick)) {
+								PrivateGUI value = g.getValue();
+								value.show();
+								encontrado = true;
+								System.out.println(encontrado);
+							}
+						}
+					}
+				}
+			}
 		}
+		if (!nick.equals(this.nombreUsuario) && encontrado == false) {
+			try {
+				ChatClient remoto = chatServer.getStub(nick);
 
-		converPrivada = new PrivateGUI(this, nick);
-		converPrivada.setTitle("Conversación privada con " + client.getNick());
-		framesActivos.put(nick, converPrivada);
+				String urlRemota = chatServer.getUrl(nick);
+				String miUrl = chatServer.getUrl(this.nombreUsuario);
+				System.out.println(urlRemota);
+				client = (ChatClient) Naming.lookup(urlRemota);
+				remoto.conectarClientes(this.nombreUsuario, nick, miUrl);
 
-		interfaz.getMensaje().setText("");
+				conversacionesActivas.put(nick, this.nombreUsuario);
+
+			} catch (MalformedURLException | RemoteException
+					| NotBoundException e1) {
+				e1.printStackTrace();
+			}
+
+			converPrivada = new PrivateGUI(this, nick);
+			converPrivada.setTitle("["+this.nombreUsuario+"] "+"Conversación privada con "
+					+ client.getNick());
+			framesActivos.put(nick, converPrivada);
+
+			interfaz.getMensaje().setText("");
+		}
 	}
 
 	/**
@@ -145,8 +168,13 @@ public class Client {
 	public void enviar() {
 		String msg;
 		msg = interfaz.getMensaje().getText();
+		List<ChatClient> lista;
 		try {
-			client.callback(msg, client.getNick());
+			lista = chatServer.getListaConectados();
+			for (ChatClient ch : lista) {
+				ch.callbackPublico(msg, this.nombreUsuario);
+			}
+
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
@@ -198,13 +226,22 @@ public class Client {
 				converPrivada = e.getValue();
 			}
 		}
-		converPrivada.getMensajes().append(
-				nombreUsuario + ": " + content + "\n");
+
 		if (content.equals(" se ha desconectado")) {
+			converPrivada.getMensajes().append(
+					"Servidor : " + nombreUsuario + content + "\n");
 			converPrivada.getMensajes().setEnabled(false);
 			converPrivada.getBtnEnviar().setEnabled(false);
 			converPrivada.getSend().setEnabled(false);
+
+		} else {
+			converPrivada.getMensajes().append(
+					nombreUsuario + ": " + content + "\n");
 		}
+
+		converPrivada.getMensajes().setCaretPosition(
+				converPrivada.getMensajes().getText().length());
+
 	}
 
 	/**
@@ -219,7 +256,7 @@ public class Client {
 	 */
 	public void conectaMR(ChatClient ch, String nombreUsuario, String nick) {
 		converPrivada = new PrivateGUI(this, nombreUsuario);
-		converPrivada.setTitle("Conversación privada con " + nombreUsuario);
+		converPrivada.setTitle("["+nick+"] "+"Conversación privada con " + nombreUsuario);
 		converPrivada.getMensajes().setText(
 				nombreUsuario + " quiere hablar contigo\n");
 		conversacionesActivas.put(nombreUsuario, nick);
@@ -239,7 +276,6 @@ public class Client {
 		crearConexion(nombre);
 		if (!comprobarNick(nombre)) {
 			actualizarListaUsuarios();
-
 		}
 		interfaz.getMensaje().setText("");
 
@@ -274,48 +310,68 @@ public class Client {
 	/**
 	 * Método desconectar, desconecta a un cliente del sistema completamente.
 	 */
-	public void desconectar() {
+	public void desconectar() throws RemoteException {
+		List<String> aux = new ArrayList<String>();
 		interfaz.getBtnConectar().setEnabled(true);
 		interfaz.getBtnDesconectar().setEnabled(false);
 		interfaz.getBtnEnviar().setEnabled(false);
 		interfaz.getClientesConectados().setEnabled(false);
+		interfaz.getListUsuarios().setEnabled(false);
 		interfaz.getRootPane().setDefaultButton(interfaz.getBtnConectar());
 
-		try {
-			avisarDesconectado(client.getNick());
-		} catch (RemoteException e1) {
-			e1.printStackTrace();
-		}
-
-		
 		if (!conversacionesActivas.isEmpty()) {
-
 			for (String converActiva : conversacionesActivas.keySet()) {
-				try {
-					ChatClient remoto = chatServer.getStub(converActiva);
-					remoto.callback(" se ha desconectado", this.nombreUsuario);
-					if (!framesActivos.isEmpty()) {
-						for (Entry<String, PrivateGUI> e : framesActivos
-								.entrySet()) {
-							if (e.getKey().equals(converActiva)) {
-								PrivateGUI value = e.getValue();
-								value.setVisible(false);
-								value.dispose();
-								framesActivos.remove(e);
-							}
+				if (!framesActivos.isEmpty()) {
+					for (Entry<String, PrivateGUI> e : framesActivos
+							.entrySet()) {
+						if (e.getKey().equals(converActiva)) {
+							PrivateGUI value = e.getValue();
+							value.setVisible(false);
+							value.dispose();
+							aux.add(converActiva);
+							framesActivos.remove(e);
 						}
-
 					}
-				} catch (RemoteException e) {
-					e.printStackTrace();
+
 				}
+			}
+			for (String aux1 : aux) {
+				conversacionesActivas.remove(aux1);
 			}
 		}
 		try {
-			chatServer.disconnect(client, client.getNick());
+			urlClient = chatServer.getUrl() + puertoClient;
+			System.out.println("ESTA ES:" + urlClient);
+			Naming.unbind(urlClient);
+
+			avisarDesconectado(this.nombreUsuario);
+
+			chatServer.disconnect(client, this.nombreUsuario);
+
+		} catch (RemoteException e1) {
+			e1.printStackTrace();
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (NotBoundException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private boolean comprobarUsuarioConectado(String converActiva) {
+		boolean usuarioConectado = false;
+		List<ChatClient> lista;
+		try {
+			lista = chatServer.getListaConectados();
+			for (ChatClient ch : lista) {
+				if(ch.getNick().equals(converActiva)){
+					usuarioConectado = true;
+				}
+			}
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
+		System.out.println(usuarioConectado);
+		return usuarioConectado;
 	}
 
 	/**
@@ -332,47 +388,67 @@ public class Client {
 		try {
 			lista = chatServer.getListaConectados();
 			DefaultListModel<String> model = interfaz.getModel();
-			model.removeAllElements();
-			int contador=0;
+			model.clear();
+			int contador = 0;
 
-				for (ChatClient ch : lista) {
-					model.add(contador, ch.getNick());
-					++contador;
-				}
+			for (ChatClient ch : lista) {
+				model.add(contador, ch.getNick());
+				++contador;
+			}
 			interfaz.setModel(model);
+			interfaz.repaint();
+			interfaz.getListUsuarios().repaint();
+			interfaz.getPanel().repaint();
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
 	}
-	
-	public void avisarConectado(String usuarioConectado){
+
+	public void avisarConectado(String usuarioConectado) {
 		List<ChatClient> lista;
 		try {
 			lista = chatServer.getListaConectados();
 			for (ChatClient ch : lista) {
-				ch.callback(" se ha conectado", usuarioConectado);
+				ch.callbackPublico(" se ha conectado", usuarioConectado);
 			}
-			
+
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
 	}
-	
-	public void avisarDesconectado(String usuarioConectado){
+
+	public void avisarDesconectado(String usuarioConectado) {
 		List<ChatClient> lista;
 		try {
 			lista = chatServer.getListaConectados();
-			for (ChatClient ch : lista) {
-				ch.callback(" se ha desconectado", usuarioConectado);
+			if (!lista.isEmpty()) {
+				for (ChatClient ch : lista) {
+					ch.callbackPublico(" se ha desconectado", usuarioConectado);
+				}
 			}
-			
+
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
 	}
-	
-	public void actualizarInterfazPublica(String content, String nombreUsuario){
-		interfaz.getClientesConectados().append("["+nombreUsuario+"]: "+content+"\n");
+
+	public void actualizarInterfazPublica(String content, String nombreUsuario) {
+		interfaz.getClientesConectados().append(
+				"[" + nombreUsuario + "]: " + content + "\n");
+		interfaz.getClientesConectados().setCaretPosition(
+				interfaz.getClientesConectados().getText().length());
+	}
+
+	public void desactivarConverPrivadas(String converActiva) {
+		if (!framesActivos.isEmpty()) {
+			for (Entry<String, PrivateGUI> e : framesActivos.entrySet()) {
+				if (e.getKey().equals(converActiva)) {
+					PrivateGUI value = e.getValue();
+					value.setEnabled(false);
+				}
+			}
+
+		}
 	}
 
 }
