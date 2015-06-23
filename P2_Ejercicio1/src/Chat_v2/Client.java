@@ -45,28 +45,6 @@ public class Client {
 
 	public static void main(String[] args) {
 		Client cliente = new Client();
-
-		/*
-		 * System.out.println("Escriba un nick"); Scanner scanner = new
-		 * Scanner(System.in); String nombreCliente=scanner.nextLine();
-		 * System.out.println("¡Bienvenido/a " + nombreCliente+"!");
-		 * 
-		 * 
-		 * try { chatServer = (ChatServer) Naming.lookup(Server.SERVER_URL);
-		 * client = new ChatClientImpl();
-		 * chatServer.connect(client,nombreCliente);
-		 * 
-		 * client.setNick(nombreCliente);
-		 * 
-		 * String msg = "";
-		 * 
-		 * while (!msg.equals("exit")) { msg = scanner.nextLine();
-		 * chatServer.send(msg,nombreCliente); }
-		 * 
-		 * chatServer.disconnect(client,nombreCliente); } catch
-		 * (NotBoundException | RemoteException | MalformedURLException e) {
-		 * e.printStackTrace(); }
-		 */
 	}
 
 	public void enviar() {
@@ -119,6 +97,8 @@ public class Client {
 				aux = aux + client.getNick() + "\n";
 			}
 			interfaz.getClientesConectados().setText(aux);
+			interfaz.getClientesConectados().setCaretPosition(
+					interfaz.getClientesConectados().getText().length());
 
 		} catch (RemoteException e) {
 			e.printStackTrace();

@@ -1,3 +1,0 @@
-INDEX VERSION 1.127+/Users/Louri1/Desktop/P2DSD/ChatPrivado_Ejercicio2/.metadata/.plugins/org.eclipse.jdt.core
-3319471162.index
-323032530.index
